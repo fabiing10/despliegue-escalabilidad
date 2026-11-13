@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semáforo de Liquidaciones</title>
+<style>
+:root{
+  --bg:#f3f5f8; --surface:#ffffff; --surface-2:#f8f9fb; --text:#1b2230; --muted:#5d6676;
+  --border:#e1e5eb; --accent:#1f4e8c; --accent-soft:#e7eef9; --accent-text:#ffffff;
+  --verde:#1e9e5a; --amarillo:#e2b100; --naranja:#ee7a16; --rojo:#d83a3a; --negro:#17171b; --gris:#a3a9b3;
+  --shadow:0 1px 2px rgba(16,24,40,.05),0 1px 3px rgba(16,24,40,.07);
+  --radius:10px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#12151b; --surface:#1a1e26; --surface-2:#20252f; --text:#e6e9ef; --muted:#9aa3b2;
+    --border:#2c3340; --accent:#7aa7ec; --accent-soft:#1f2b3f; --accent-text:#0d1420;
+    --negro:#000000; --gris:#7d8592; --shadow:none; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12151b; --surface:#1a1e26; --surface-2:#20252f; --text:#e6e9ef; --muted:#9aa3b2;
+  --border:#2c3340; --accent:#7aa7ec; --accent-soft:#1f2b3f; --accent-text:#0d1420;
+  --negro:#000000; --gris:#7d8592; --shadow:none; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;padding-bottom:70px}
+button,input,select,textarea{font:inherit;color:inherit}
+h2{font-size:15px;margin:0 0 12px}
+.num{font-variant-numeric:tabular-nums}
+
+/* Encabezado */
+.top{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 24px;display:flex;align-items:center;gap:20px;flex-wrap:wrap;position:sticky;top:0;z-index:20}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{display:inline-flex;flex-direction:column;gap:3px;padding:5px;border-radius:7px;background:var(--negro)}
+.logo i{width:8px;height:8px;border-radius:50%;display:block}
+.brand h1{font-size:16px;margin:0}
+.brand p{margin:0;color:var(--muted);font-size:12px}
+nav{display:flex;gap:4px}
+nav a{padding:7px 14px;border-radius:8px;color:var(--muted);text-decoration:none;font-weight:600}
+nav a:hover{background:var(--surface-2)}
+nav a.activo{background:var(--accent-soft);color:var(--accent)}
+.ref{margin-left:auto;display:flex;align-items:center;gap:12px;color:var(--muted);font-size:13px;flex-wrap:wrap}
+.ref strong{color:var(--text)}
+main{max-width:1320px;margin:0 auto;padding:20px 24px}
+
+/* Componentes */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px 18px;min-width:0}
+.btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-text);padding:7px 14px;border-radius:8px;font-weight:600;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--accent);border-color:var(--border)}
+.btn.ghost:hover{background:var(--surface-2)}
+.btn.sm{padding:5px 10px;font-size:13px}
+.btn:disabled{background:var(--surface-2);color:var(--muted);border-color:var(--border);cursor:not-allowed;filter:none}
+.sem{display:inline-flex;align-items:center;gap:6px;padding:2px 10px 2px 8px;border-radius:999px;font-weight:600;font-size:12px;background:var(--surface-2);border:1px solid var(--border);white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--c);flex:none;box-shadow:0 0 0 1px rgba(127,127,127,.35)}
+.c-verde{--c:var(--verde)} .c-amarillo{--c:var(--amarillo)} .c-naranja{--c:var(--naranja)}
+.c-rojo{--c:var(--rojo)} .c-negro{--c:var(--negro)} .c-gris{--c:var(--gris)}
+.tag{display:inline-block;font-size:11px;font-weight:700;padding:1px 7px;border-radius:999px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+.muted{color:var(--muted)}
+.nota{color:var(--muted);font-size:12px;margin:10px 0 0}
+
+/* Inventario */
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:12px}
+.toolbar label{display:flex;flex-direction:column;gap:3px;font-size:12px;color:var(--muted);font-weight:600}
+.search{flex:1 1 280px}
+input[type=search],input[type=text],input[type=number],input[type=date],select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:7px 10px;width:100%;min-width:0}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:var(--accent)}
+.toolbar select{min-width:170px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--surface);padding:4px 11px;border-radius:999px;cursor:pointer;font-size:13px;font-weight:600}
+.chip:hover{background:var(--surface-2)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.tabla-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:8px}
+table{border-collapse:collapse;width:100%}
+.tabla th{background:var(--surface-2);text-align:left;font-size:12px;color:var(--muted);font-weight:700;padding:9px 8px;border-bottom:1px solid var(--border);white-space:nowrap}
+.tabla td{padding:8px 8px;font-size:13px;border-bottom:1px solid var(--border);vertical-align:middle}
+.tabla tr:last-child td{border-bottom:0}
+.tabla td.r,.tabla th.r{text-align:right}
+.fila{cursor:pointer}
+.fila:hover td,.fila:focus td{background:var(--surface-2)}
+.fila:focus{outline:none}
+.fila td:first-child{box-shadow:inset 4px 0 0 var(--c);font-weight:700;white-space:nowrap}
+.nowrap{white-space:nowrap}
+.cont{min-width:180px;max-width:260px}
+.barra{display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.barra b{display:inline-block;width:56px;height:6px;border-radius:3px;background:var(--border);overflow:hidden;position:relative}
+.barra b i{position:absolute;left:0;top:0;bottom:0;background:var(--accent);border-radius:3px}
+.vacio{text-align:center;color:var(--muted);padding:28px !important}
+
+/* Tablero */
+.contadores{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.contador{text-align:left;cursor:pointer;border-top:4px solid var(--c);padding:14px 16px;display:flex;flex-direction:column;justify-content:flex-start}
+.contador:hover{background:var(--surface-2)}
+.contador .n{font-size:30px;font-weight:800;line-height:1.1}
+.contador .l{display:flex;align-items:center;gap:6px;font-weight:700;margin-top:2px}
+.contador .d{color:var(--muted);font-size:12px;margin-top:4px}
+.fila2{display:grid;grid-template-columns:minmax(260px,1fr) 2.4fr;gap:16px;align-items:start}
+.riesgo .v{font-size:30px;font-weight:800;margin:6px 0 4px;word-break:break-word}
+
+/* Ficha */
+.ficha-top{margin-bottom:12px}
+.ficha-head{display:flex;flex-wrap:wrap;gap:18px 28px;align-items:center;margin-bottom:16px;border-left:6px solid var(--c)}
+.fh-main{flex:1 1 260px;min-width:0}
+.fh-num{font-size:20px;font-weight:800;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.fh-sub{color:var(--muted);margin-top:2px}
+.kpis{display:flex;gap:22px;flex-wrap:wrap}
+.kpis div{display:flex;flex-direction:column}
+.kpis span{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.kpis strong{font-size:16px}
+.acciones{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.acciones .fila-acc{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.motivo{font-size:12px;color:var(--muted)}
+.ok{color:var(--verde);font-weight:700}
+.grid-ficha{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
+.col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.campo{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted);min-width:0}
+.campo.full{grid-column:1/-1}
+.campo small{font-weight:400}
+.campo.error input{border-color:var(--rojo)}
+.err{color:var(--rojo);font-weight:600;display:none}
+.campo.error .err{display:block}
+.fechas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.fecha{border:1px solid var(--border);border-radius:8px;padding:10px 12px;background:var(--surface-2)}
+.fecha span{display:block;font-size:12px;color:var(--muted);font-weight:600}
+.fecha strong{display:block;font-size:17px;margin:3px 0}
+.fecha.vigente{border:2px solid var(--accent);background:var(--accent-soft)}
+.fecha.tenue{opacity:.55}
+.base{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;color:var(--muted);font-size:13px}
+.base strong{color:var(--text)}
+.check{width:100%}
+.check td{padding:7px 4px;border-bottom:1px solid var(--border)}
+.check tr:last-child td{border-bottom:0}
+.cod{font-weight:700;font-size:12px;color:var(--muted);width:34px}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.seg button{border:0;background:var(--surface);padding:4px 11px;cursor:pointer;font-size:13px;font-weight:600;color:var(--muted)}
+.seg button+button{border-left:1px solid var(--border)}
+.seg button[aria-pressed="true"].e-si{background:var(--verde);color:#fff}
+.seg button[aria-pressed="true"].e-no{background:var(--rojo);color:#fff}
+.seg button[aria-pressed="true"].e-na{background:var(--gris);color:#fff}
+.comp{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-weight:600}
+.comp b{flex:1;height:8px;border-radius:4px;background:var(--border);position:relative;overflow:hidden}
+.comp b i{position:absolute;inset:0 auto 0 0;background:var(--accent)}
+textarea{resize:vertical;min-height:110px}
+
+/* Oficio */
+dialog{border:1px solid var(--border);border-radius:12px;padding:0;width:min(760px,calc(100vw - 32px));max-height:calc(100vh - 32px);background:var(--surface);color:var(--text);box-shadow:0 20px 50px rgba(0,0,0,.25)}
+dialog::backdrop{background:rgba(10,14,22,.5)}
+.dlg-h{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border)}
+.dlg-h h2{margin:0}
+.dlg-b{padding:14px 18px;overflow:auto;max-height:calc(100vh - 170px)}
+.dlg-f{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:12px 18px;border-top:1px solid var(--border);flex-wrap:wrap}
+.of-campos{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+pre.oficio{white-space:pre-wrap;word-wrap:break-word;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin:0;font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.x{border:0;background:transparent;font-size:22px;line-height:1;cursor:pointer;color:var(--muted)}
+
+/* Aviso */
+.aviso{position:fixed;left:0;right:0;bottom:0;background:var(--negro);color:#f3f4f6;font-size:12.5px;padding:10px 24px;text-align:center;z-index:30;border-top:1px solid var(--border)}
+
+@media (max-width:1100px){
+  .contadores{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .fila2,.grid-ficha{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:640px){
+  .top{padding:10px 16px;gap:10px}
+  .ref{margin-left:0}
+  main{padding:16px}
+  .contadores{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .form,.of-campos{grid-template-columns:1fr}
+  .fechas{grid-template-columns:1fr}
+  .aviso{padding:8px 16px;font-size:11.5px}
+  body{padding-bottom:90px}
+}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <span class="logo" aria-hidden="true"><i style="background:var(--rojo)"></i><i style="background:var(--amarillo)"></i><i style="background:var(--verde)"></i></span>
+    <div><h1>Semáforo de Liquidaciones</h1><p>Oficina de contratación · Entidad ficticia</p></div>
+  </div>
+  <nav>
+    <a href="#/inventario" data-nav="inventario">Inventario</a>
+    <a href="#/tablero" data-nav="tablero">Tablero</a>
+  </nav>
+  <div class="ref">
+    <span>Fecha de referencia (hoy): <strong id="fechaRef"></strong></span>
+    <button type="button" class="btn ghost sm" data-action="reset">Restaurar datos de ejemplo</button>
+  </div>
+</header>
+
+<main id="app"></main>
+
+<footer class="aviso">Reglas simplificadas para el taller. Etapa y semáforo son sugerencias; no declaran la pérdida de competencia ni sustituyen la revisión jurídica.</footer>
+
+<dialog id="dlgOficio" aria-labelledby="dlgTitulo">
+  <div class="dlg-h"><h2 id="dlgTitulo">Oficio de requerimiento</h2><button type="button" class="x" data-action="cerrar-oficio" aria-label="Cerrar">×</button></div>
+  <div class="dlg-b">
+    <div class="of-campos">
+      <label class="campo">Ciudad<input type="text" id="ofCiudad" placeholder="Ej.: Bogotá D.C."></label>
+      <label class="campo">Plazo para remitir<input type="text" id="ofPlazo" placeholder="Ej.: diez (10) días hábiles"></label>
+      <label class="campo full">Nombre y cargo del funcionario responsable<input type="text" id="ofFuncionario" placeholder="Ej.: Nombre Apellido, Profesional de contratación"></label>
+    </div>
+    <p class="nota" style="margin:0 0 10px">Los campos vacíos quedan entre corchetes en el borrador.</p>
+    <pre class="oficio" id="ofTexto"></pre>
+  </div>
+  <div class="dlg-f">
+    <span class="motivo" id="ofEstado" role="status"></span>
+    <button type="button" class="btn ghost" data-action="copiar">Copiar</button>
+    <button type="button" class="btn" data-action="descargar">Descargar .txt</button>
+  </div>
+</dialog>
+
+<script>
+/* =========================================================
+   Configuración
+   ========================================================= */
+// Fecha de referencia ("hoy"). Con null se usa la fecha del sistema.
+const FECHA_REFERENCIA = "2026-11-05";
+const STORAGE_KEY = "semaforo-liquidaciones-v1";
+
+const TIPOS = ["Obra","Consultoría","Interventoría","Convenio","Suministro","Prestación de servicios profesionales","Apoyo a la gestión"];
+const NO_REQUIEREN = ["Prestación de servicios profesionales","Apoyo a la gestión"]; // R1
+const DOCS_BASE = [ // R7
+  ["D1","Acta de inicio"],
+  ["D2","Informes de supervisión o interventoría"],
+  ["D3","Acta de terminación o recibo final"],
+  ["D4","Informe final del contratista"],
+  ["D5","Certificación de pagos y balance financiero"],
+  ["D6","Certificación de aportes a seguridad social y parafiscales"],
+  ["D7","Garantías actualizadas para la liquidación"]
+];
+const DOCS_ADICIONALES = { // R8
+  "Obra":[["O1","Acta de entrega y recibo de obra"],["O2","Amparo de estabilidad"]],
+  "Consultoría":[["C1","Entregables aprobados"]],
+  "Interventoría":[["C1","Entregables aprobados"]],
+  "Convenio":[["V1","Informe de ejecución de recursos"],["V2","Acta de reintegro de saldos"]]
+};
+const COLORES = ["negro","rojo","naranja","amarillo","verde","gris"]; // orden de prioridad R10
+const COLOR_INFO = {
+  negro:{nombre:"Negro",desc:"Competencia perdida (sugerida)"},
+  rojo:{nombre:"Rojo",desc:"Extemporánea"},
+  naranja:{nombre:"Naranja",desc:"0 a 30 días"},
+  amarillo:{nombre:"Amarillo",desc:"31 a 60 días"},
+  verde:{nombre:"Verde",desc:"Más de 60 días"},
+  gris:{nombre:"Gris",desc:"No requiere, liquidado o en ejecución"}
+};
+
+/* Datos de ejemplo ficticios: códigos en No y en N/A; el resto en Sí */
+const SEMILLA = [
+  {numero:"CT-001",contratista:"Constructora Ficticia Alfa S.A.S.",nit:"000.000.001-0",objeto:"Adecuación de sede",tipo:"Obra",valor:1250000000,fecha_terminacion:"2026-09-30",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D4","D7","O2"],na:[]},
+  {numero:"CT-002",contratista:"Interventorías Ficticias Beta S.A.S.",nit:"000.000.002-0",objeto:"Interventoría de vías",tipo:"Interventoría",valor:180000000,fecha_terminacion:"2026-06-20",plazo_pactado_meses:6,estado_liquidacion:"Pendiente",no:["D5"],na:[]},
+  {numero:"CT-003",contratista:"Suministros Ficticios Gamma S.A.S.",nit:"000.000.003-0",objeto:"Mobiliario de oficina",tipo:"Suministro",valor:95000000,fecha_terminacion:"2026-07-20",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D2","D6"],na:[]},
+  {numero:"CT-004",contratista:"Fundación Ficticia Delta",nit:"000.000.004-0",objeto:"Convenio cultural",tipo:"Convenio",valor:420000000,fecha_terminacion:"2026-05-20",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D3","V2"],na:["D7"]},
+  {numero:"CT-005",contratista:"Consultores Ficticios Épsilon S.A.S.",nit:"000.000.005-0",objeto:"Estudio de movilidad",tipo:"Consultoría",valor:310000000,fecha_terminacion:"2026-06-10",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:[],na:[]},
+  {numero:"CT-006",contratista:"Obras Ficticias Zeta S.A.S.",nit:"000.000.006-0",objeto:"Construcción de puente",tipo:"Obra",valor:2100000000,fecha_terminacion:"2025-10-31",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D1","D5","D6","O1"],na:[]},
+  {numero:"CT-007",contratista:"Dotaciones Ficticias Eta S.A.S.",nit:"000.000.007-0",objeto:"Dotación de uniformes",tipo:"Suministro",valor:64000000,fecha_terminacion:"2023-12-15",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D4","D7"],na:[]},
+  {numero:"CT-008",contratista:"Profesional Ficticio Uno",nit:"000.000.008-0",objeto:"Asesoría jurídica",tipo:"Prestación de servicios profesionales",valor:48000000,fecha_terminacion:"2026-03-31",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D4"],na:[]},
+  {numero:"CT-009",contratista:"Consultores Ficticios Theta S.A.S.",nit:"000.000.009-0",objeto:"Diagnóstico institucional",tipo:"Consultoría",valor:275000000,fecha_terminacion:"2025-06-30",plazo_pactado_meses:null,estado_liquidacion:"Liquidado",no:[],na:[]},
+  {numero:"CT-010",contratista:"Interventorías Ficticias Iota S.A.S.",nit:"000.000.010-0",objeto:"Interventoría de acueducto",tipo:"Interventoría",valor:390000000,fecha_terminacion:"2027-03-31",plazo_pactado_meses:null,estado_liquidacion:"Pendiente",no:["D3","D4","D5","D7","C1"],na:[]}
+];
+
+function docsPara(tipo){ return DOCS_BASE.concat(DOCS_ADICIONALES[tipo] || []); }
+
+function construirSemilla(){
+  return SEMILLA.map((s,i)=>({
+    id:"c"+(i+1),
+    numero:s.numero, contratista:s.contratista, nit:s.nit, objeto:s.objeto, tipo:s.tipo,
+    valor:s.valor, fecha_terminacion:s.fecha_terminacion, plazo_pactado_meses:s.plazo_pactado_meses,
+    estado_liquidacion:s.estado_liquidacion,
+    documentos:docsPara(s.tipo).map(([codigo,nombre])=>({codigo,nombre,estado:s.no.includes(codigo)?"No":(s.na.includes(codigo)?"N/A":"Sí")})),
+    observaciones:"", validado_por_humano:false
+  }));
+}
+
+/* =========================================================
+   Fechas: solo año, mes y día con Date.UTC
+   ========================================================= */
+function diasDelMes(y,m){ return new Date(Date.UTC(y,m,0)).getUTCDate(); } // m de 1 a 12
+function parseFecha(s){
+  const r = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(s||"").trim());
+  if(!r) return null;
+  const y=+r[1], m=+r[2], d=+r[3];
+  if(m<1 || m>12 || d<1 || d>diasDelMes(y,m)) return null;
+  return {y,m,d};
+}
+function sumarMeses(f,n){
+  const total = f.y*12 + (f.m-1) + n;
+  const y = Math.floor(total/12), m = total - y*12 + 1;
+  return {y, m, d:Math.min(f.d, diasDelMes(y,m))}; // si el día no existe, último día del mes
+}
+function utc(f){ return Date.UTC(f.y, f.m-1, f.d); }
+function comparar(a,b){ return utc(a) - utc(b); }
+function diasEntre(desde,hasta){ return Math.round((utc(hasta)-utc(desde))/86400000); }
+function fmtFecha(f){ return f ? f.y+"-"+String(f.m).padStart(2,"0")+"-"+String(f.d).padStart(2,"0") : "—"; }
+function hoy(){
+  if(FECHA_REFERENCIA) return parseFecha(FECHA_REFERENCIA);
+  const n = new Date();
+  return {y:n.getFullYear(), m:n.getMonth()+1, d:n.getDate()};
+}
+
+/* =========================================================
+   Reglas R1 a R12
+   ========================================================= */
+function evaluar(c){
+  const t = hoy();
+  const ev = {requiere:!NO_REQUIEREN.includes(c.tipo)};               // R1
+  const ft = parseFecha(c.fecha_terminacion);
+  const pactado = c.plazo_pactado_meses !== null && c.plazo_pactado_meses !== "" && !isNaN(c.plazo_pactado_meses);
+  ev.mesesBilateral = pactado ? Number(c.plazo_pactado_meses) : 4;
+  ev.pactado = pactado;
+  if(ft){
+    ev.terminacion = ft;
+    ev.bilateral = sumarMeses(ft, ev.mesesBilateral);                    // R2
+    ev.unilateral = sumarMeses(ev.bilateral, 2);                          // R3
+    ev.maxima = sumarMeses(ev.unilateral, 24);                            // R4
+  }
+  ev.limite = null; ev.dias = null; ev.proyectada = false; ev.vigente = null;
+
+  // R5: etapa, en este orden
+  if(!ev.requiere) ev.etapa = "No requiere";
+  else if(c.estado_liquidacion === "Liquidado") ev.etapa = "Liquidado";
+  else if(!ft) ev.etapa = "Sin fecha de terminación";
+  else if(comparar(t,ft) <= 0){ ev.etapa = "En ejecución"; ev.limite = ev.bilateral; ev.proyectada = true; ev.vigente = "bilateral"; }
+  else if(comparar(t,ev.bilateral) <= 0){ ev.etapa = "Bilateral"; ev.limite = ev.bilateral; ev.vigente = "bilateral"; }
+  else if(comparar(t,ev.unilateral) <= 0){ ev.etapa = "Unilateral"; ev.limite = ev.unilateral; ev.vigente = "unilateral"; }
+  else if(comparar(t,ev.maxima) <= 0){ ev.etapa = "Extemporánea"; ev.limite = ev.maxima; ev.vigente = "maxima"; }
+  else { ev.etapa = "Competencia perdida"; ev.limite = ev.maxima; ev.vigente = "maxima"; }
+
+  // R6: días restantes y semáforo
+  if(ev.limite && !ev.proyectada) ev.dias = diasEntre(t, ev.limite);
+  if(ev.etapa === "Bilateral" || ev.etapa === "Unilateral"){
+    ev.color = ev.dias > 60 ? "verde" : (ev.dias >= 31 ? "amarillo" : "naranja");
+  } else if(ev.etapa === "Extemporánea") ev.color = "rojo";
+  else if(ev.etapa === "Competencia perdida") ev.color = "negro";
+  else ev.color = "gris";
+  ev.limiteTexto = ev.limite ? fmtFecha(ev.limite) + (ev.proyectada ? " (proyectada)" : "") : "—";
+  ev.diasTexto = ev.dias === null ? "—" : String(ev.dias);
+
+  // R9: completitud
+  const aplicables = c.documentos.filter(d=>d.estado !== "N/A");
+  ev.docsSi = aplicables.filter(d=>d.estado === "Sí").length;
+  ev.docsAplicables = aplicables.length;
+  ev.completitud = aplicables.length ? Math.round(ev.docsSi/aplicables.length*100) : null;
+  ev.completitudTexto = ev.completitud === null ? "—" : ev.completitud + " %";
+  ev.pendientes = c.documentos.filter(d=>d.estado === "No");
+
+  // R12: habilitación del oficio
+  if(!ev.requiere) ev.motivoOficio = "No requiere liquidación";
+  else if(c.estado_liquidacion === "Liquidado") ev.motivoOficio = "Contrato liquidado";
+  else if(ev.etapa === "En ejecución") ev.motivoOficio = "Contrato en ejecución";
+  else if(!ft) ev.motivoOficio = "Falta la fecha de terminación";
+  else if(!ev.pendientes.length) ev.motivoOficio = "Sin documentos pendientes";
+  else ev.motivoOficio = null;
+  ev.oficioHabilitado = ev.motivoOficio === null;
+  return ev;
+}
+
+// R10: prioridad
+function ordenar(items){
+  return items.slice().sort((a,b)=>{
+    const dc = COLORES.indexOf(a.ev.color) - COLORES.indexOf(b.ev.color);
+    if(dc) return dc;
+    if(a.ev.dias !== null && b.ev.dias !== null && a.ev.dias !== b.ev.dias) return a.ev.dias - b.ev.dias;
+    return (Number(b.c.valor)||0) - (Number(a.c.valor)||0);
+  });
+}
+function evaluados(){ return datos.map(c=>({c, ev:evaluar(c)})); }
+
+/* =========================================================
+   Estado y persistencia (localStorage, opcional)
+   ========================================================= */
+let datos, oficioCfg = {ciudad:"", plazo:"", funcionario:""};
+let filtros = {color:"", tipo:"", estado:"", q:""};
+let oficioActual = null;
+let origenFicha = "inventario"; // pantalla desde la que se abrió la ficha
+
+function cargar(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw){
+      const obj = JSON.parse(raw);
+      if(obj && Array.isArray(obj.contratos) && obj.contratos.every(c=>c && c.id && Array.isArray(c.documentos))){
+        datos = obj.contratos;
+        if(obj.oficio) oficioCfg = Object.assign(oficioCfg, obj.oficio);
+        return;
+      }
+    }
+  }catch(e){ /* sin almacenamiento: se usan los datos de ejemplo */ }
+  datos = construirSemilla();
+}
+function guardar(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({version:1, contratos:datos, oficio:oficioCfg})); }catch(e){}
+}
+
+/* =========================================================
+   Utilidades de interfaz
+   ========================================================= */
+const app = document.getElementById("app");
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch])); }
+function pesos(n){
+  if(n === null || n === "" || isNaN(n)) return "—";
+  const v = Math.round(Math.abs(Number(n))).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+  return (Number(n) < 0 ? "-" : "") + "$" + v;
+}
+function norm(s){ return String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase(); }
+function semaforo(color){ return `<span class="sem c-${color}"><span class="dot"></span>${COLOR_INFO[color].nombre}</span>`; }
+function barra(ev){
+  const p = ev.completitud ?? 0;
+  return `<span class="barra"><b><i style="width:${p}%"></i></b>${ev.completitudTexto}</span>`;
+}
+
+/* =========================================================
+   Pantalla 1 – Inventario
+   ========================================================= */
+function vistaInventario(){
+  app.innerHTML = `
+  <section class="card">
+    <div class="toolbar">
+      <label class="search">Buscar
+        <input type="search" id="fQ" placeholder="Número, contratista u objeto" value="${esc(filtros.q)}">
+      </label>
+      <label>Tipo
+        <select id="fTipo"><option value="">Todos</option>${TIPOS.map(t=>`<option>${esc(t)}</option>`).join("")}</select>
+      </label>
+      <label>Estado de liquidación
+        <select id="fEstado"><option value="">Todos</option><option>Pendiente</option><option>Liquidado</option></select>
+      </label>
+      <button type="button" class="btn ghost sm" data-action="limpiar">Limpiar filtros</button>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="tabla-wrap">
+      <table class="tabla">
+        <thead><tr>
+          <th>Semáforo</th><th>Número</th><th>Contratista</th><th>Tipo</th><th class="r">Valor</th><th>Terminación</th>
+          <th>Etapa</th><th>Fecha límite</th><th class="r">Días</th><th>Completitud</th><th>Validado</th>
+        </tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+    <p class="nota" id="conteo"></p>
+  </section>`;
+  document.getElementById("fTipo").value = filtros.tipo;
+  document.getElementById("fEstado").value = filtros.estado;
+  actualizarTabla();
+}
+
+function actualizarTabla(){
+  const todos = evaluados();
+  const cuenta = {}; COLORES.forEach(k=>cuenta[k]=0); todos.forEach(x=>cuenta[x.ev.color]++);
+  document.getElementById("chips").innerHTML =
+    `<button type="button" class="chip" data-action="color" data-color="" aria-pressed="${filtros.color===""}">Todos (${todos.length})</button>` +
+    COLORES.map(k=>`<button type="button" class="chip c-${k}" data-action="color" data-color="${k}" aria-pressed="${filtros.color===k}"><span class="dot"></span>${COLOR_INFO[k].nombre} (${cuenta[k]})</button>`).join("");
+
+  const q = norm(filtros.q.trim());
+  const lista = ordenar(todos.filter(({c,ev})=>
+    (!filtros.color || ev.color === filtros.color) &&
+    (!filtros.tipo || c.tipo === filtros.tipo) &&
+    (!filtros.estado || c.estado_liquidacion === filtros.estado) &&
+    (!q || norm(c.numero).includes(q) || norm(c.contratista).includes(q) || norm(c.objeto).includes(q))
+  ));
+  document.getElementById("tbody").innerHTML = lista.length ? lista.map(({c,ev})=>`
+    <tr class="fila c-${ev.color}" data-id="${c.id}" tabindex="0" title="Abrir ficha de ${esc(c.numero)}">
+      <td>${semaforo(ev.color)}</td>
+      <td class="nowrap"><strong>${esc(c.numero)}</strong></td>
+      <td class="cont">${esc(c.contratista)}</td>
+      <td>${esc(c.tipo)}</td>
+      <td class="r num nowrap">${pesos(c.valor)}</td>
+      <td class="num nowrap">${esc(c.fecha_terminacion || "—")}</td>
+      <td>${esc(ev.etapa)}</td>
+      <td class="num">${ev.limiteTexto}</td>
+      <td class="r num">${ev.diasTexto}</td>
+      <td>${barra(ev)}</td>
+      <td>${c.validado_por_humano ? '<span class="ok">✓ Sí</span>' : '<span class="muted">No</span>'}</td>
+    </tr>`).join("") : `<tr><td colspan="11" class="vacio">Ningún contrato coincide con los filtros.</td></tr>`;
+  document.getElementById("conteo").textContent =
+    `Mostrando ${lista.length} de ${todos.length} contratos, ordenados por prioridad (negro, rojo, naranja, amarillo, verde, gris; menos días primero; a igualdad, mayor valor). Haga clic en una fila para abrir la ficha.`;
+}
+
+/* =========================================================
+   Pantalla 2 – Ficha
+   ========================================================= */
+function vistaFicha(id){
+  const c = datos.find(x=>x.id === id);
+  if(!c){ location.hash = "#/inventario"; return; }
+  const inp = (k,label,type="text",extra="",cls="") =>
+    `<label class="campo ${cls}">${label}<input type="${type}" data-field="${k}" value="${esc(c[k] ?? "")}" ${extra}></label>`;
+  app.innerHTML = `
+  <div class="ficha-top">${origenFicha === "tablero"
+    ? '<a href="#/tablero" class="btn ghost sm">← Volver al tablero</a>'
+    : '<a href="#/inventario" class="btn ghost sm">← Volver al inventario</a>'}</div>
+  <section class="card ficha-head" id="fHead"></section>
+  <div class="grid-ficha">
+    <div class="col">
+      <section class="card">
+        <h2>Datos del contrato</h2>
+        <div class="form">
+          ${inp("numero","Número")}
+          ${inp("nit","NIT")}
+          ${inp("contratista","Contratista","text","","full")}
+          ${inp("objeto","Objeto","text","","full")}
+          <label class="campo">Tipo
+            <select data-field="tipo">${TIPOS.map(t=>`<option ${t===c.tipo?"selected":""}>${esc(t)}</option>`).join("")}</select>
+          </label>
+          ${inp("valor","Valor (pesos)","number",'min="0" step="1"')}
+          <label class="campo" id="campoFecha">Fecha de terminación <small>AAAA-MM-DD</small><input type="text" data-field="fecha_terminacion" value="${esc(c.fecha_terminacion)}" placeholder="AAAA-MM-DD" maxlength="10" inputmode="numeric" autocomplete="off"><span class="err">Fecha no válida; use AAAA-MM-DD.</span></label>
+          ${inp("plazo_pactado_meses",'Plazo pactado (meses) <small>vacío = 4</small>',"number",'min="0" step="1"')}
+          <label class="campo">Estado de liquidación <small>(solo lo cambia usted)</small>
+            <select data-field="estado_liquidacion">${["Pendiente","Liquidado"].map(e=>`<option ${e===c.estado_liquidacion?"selected":""}>${e}</option>`).join("")}</select>
+          </label>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Observaciones</h2>
+        <textarea data-field="observaciones" placeholder="Notas del profesional responsable">${esc(c.observaciones)}</textarea>
+      </section>
+    </div>
+    <div class="col">
+      <section class="card"><h2>Plazos de liquidación</h2><div id="fFechas"></div></section>
+      <section class="card"><h2>Lista de chequeo</h2><div id="fCheck"></div></section>
+    </div>
+  </div>`;
+  refrescarFicha(c);
+  pintarChecklist(c);
+}
+
+function refrescarFicha(c){
+  const ev = evaluar(c);
+  const head = document.getElementById("fHead");
+  head.className = `card ficha-head c-${ev.color}`;
+  head.innerHTML = `
+    <div class="fh-main">
+      <div class="fh-num">${esc(c.numero || "(sin número)")} ${semaforo(ev.color)}</div>
+      <div class="fh-sub">${esc(c.contratista)} · ${esc(c.tipo)} · ${pesos(c.valor)}</div>
+    </div>
+    <div class="kpis">
+      <div><span>Etapa</span><strong>${esc(ev.etapa)}</strong></div>
+      <div><span>Fecha límite</span><strong class="num">${ev.limiteTexto}</strong></div>
+      <div><span>Días restantes</span><strong class="num">${ev.diasTexto}</strong></div>
+      <div><span>Completitud</span><strong class="num">${ev.completitudTexto}</strong></div>
+    </div>
+    <div class="acciones">
+      <div class="fila-acc">${c.validado_por_humano
+        ? `<span class="ok">✓ Validado por humano</span><button type="button" class="btn ghost sm" data-action="validar">Quitar validación</button>`
+        : `<button type="button" class="btn ghost" data-action="validar">Marcar como validado por humano</button>`}</div>
+      <div class="fila-acc">
+        <button type="button" class="btn" data-action="oficio" ${ev.oficioHabilitado ? "" : `disabled title="${esc(ev.motivoOficio)}"`}>Generar oficio</button>
+        ${ev.oficioHabilitado ? "" : `<span class="motivo" id="motivoOficio">${esc(ev.motivoOficio)}</span>`}
+      </div>
+    </div>`;
+
+  const f = document.getElementById("fFechas");
+  if(!ev.terminacion){
+    f.innerHTML = `<p class="muted">Ingrese una fecha de terminación válida (AAAA-MM-DD) para calcular los plazos.</p>`;
+    return;
+  }
+  const tenue = ev.vigente ? "" : " tenue";
+  const tarjeta = (k,titulo,fecha,ayuda) => `
+    <div class="fecha${ev.vigente===k ? " vigente" : tenue}">
+      <span>${titulo}</span><strong class="num">${fmtFecha(fecha)}</strong>
+      ${ev.vigente===k ? `<span class="tag">${ev.proyectada ? "Vigente (proyectada)" : "Vigente"}</span>` : `<span class="muted" style="font-size:12px">${ayuda}</span>`}
+    </div>`;
+  let nota = "";
+  if(ev.etapa === "No requiere") nota = "Este tipo de contrato no requiere liquidación (art. 217, Decreto-Ley 019 de 2012). Fechas solo informativas.";
+  else if(ev.etapa === "Liquidado") nota = "Contrato marcado como liquidado por el usuario. Fechas solo informativas.";
+  else if(ev.etapa === "En ejecución") nota = "El contrato sigue en ejecución; los plazos son proyectados desde la fecha de terminación.";
+  else if(ev.etapa === "Competencia perdida") nota = "La fecha máxima ya pasó: se sugiere revisar la posible pérdida de competencia. La herramienta no la declara.";
+  f.innerHTML = `
+    <div class="base">
+      <span>Terminación: <strong class="num">${fmtFecha(ev.terminacion)}</strong></span>
+      <span>Plazo bilateral: <strong>${ev.mesesBilateral} ${ev.mesesBilateral===1?"mes":"meses"}</strong> ${ev.pactado ? "(pactado)" : "(legal, art. 11 Ley 1150 de 2007)"}</span>
+    </div>
+    <div class="fechas">
+      ${tarjeta("bilateral","Liquidación bilateral hasta",ev.bilateral,"Terminación + plazo")}
+      ${tarjeta("unilateral","Liquidación unilateral hasta",ev.unilateral,"Bilateral + 2 meses")}
+      ${tarjeta("maxima","Fecha máxima",ev.maxima,"Unilateral + 2 años")}
+    </div>
+    ${nota ? `<p class="nota">${nota}</p>` : ""}`;
+}
+
+function pintarChecklist(c){
+  const ev = evaluar(c);
+  const p = ev.completitud ?? 0;
+  const btn = (d,estado,cls)=>`<button type="button" class="${cls}" data-action="doc" data-codigo="${d.codigo}" data-estado="${estado}" aria-pressed="${d.estado===estado}">${estado}</button>`;
+  document.getElementById("fCheck").innerHTML = `
+    <div class="comp"><span>Completitud: ${ev.docsSi} de ${ev.docsAplicables} aplicables</span><b><i style="width:${p}%"></i></b><span class="num">${ev.completitudTexto}</span></div>
+    <table class="check"><tbody>
+      ${c.documentos.map(d=>`<tr>
+        <td class="cod">${d.codigo}</td><td>${esc(d.nombre)}</td>
+        <td style="text-align:right"><span class="seg" role="group" aria-label="Estado de ${esc(d.nombre)}">${btn(d,"Sí","e-si")}${btn(d,"No","e-no")}${btn(d,"N/A","e-na")}</span></td>
+      </tr>`).join("")}
+    </tbody></table>`;
+}
+
+function cambiarTipo(c, tipo){
+  const previos = {}; c.documentos.forEach(d=>previos[d.codigo]=d.estado);
+  c.tipo = tipo;
+  c.documentos = docsPara(tipo).map(([codigo,nombre])=>({codigo,nombre,estado:previos[codigo] || "No"}));
+}
+
+/* =========================================================
+   Pantalla 3 – Tablero
+   ========================================================= */
+function vistaTablero(){
+  const todos = evaluados();
+  const cuenta = {}; COLORES.forEach(k=>cuenta[k]=0); todos.forEach(x=>cuenta[x.ev.color]++);
+  const enRiesgo = todos.filter(x=>["naranja","rojo","negro"].includes(x.ev.color));
+  const riesgo = enRiesgo.reduce((s,x)=>s + (Number(x.c.valor)||0), 0);   // R11
+  const top = ordenar(todos).slice(0,5);
+  app.innerHTML = `
+  <div class="contadores">
+    ${COLORES.map(k=>`<button type="button" class="card contador c-${k}" data-action="ir-color" data-color="${k}" title="Ver en el inventario">
+      <div class="n num" id="cnt-${k}">${cuenta[k]}</div>
+      <div class="l"><span class="dot"></span>${COLOR_INFO[k].nombre}</div>
+      <div class="d">${COLOR_INFO[k].desc}</div>
+    </button>`).join("")}
+  </div>
+  <div class="fila2">
+    <section class="card riesgo">
+      <h2>Valor en riesgo</h2>
+      <div class="v num" id="valorRiesgo">${pesos(riesgo)}</div>
+      <p class="nota" style="margin:0">Suma del valor de los ${enRiesgo.length} contratos en naranja, rojo y negro.</p>
+    </section>
+    <section class="card">
+      <h2>Top 5 por prioridad</h2>
+      <div class="tabla-wrap">
+        <table class="tabla"><thead><tr>
+          <th>#</th><th>Número</th><th>Contratista</th><th>Etapa</th><th>Fecha límite</th><th class="r">Días</th><th>Semáforo</th><th class="r">Valor</th>
+        </tr></thead><tbody id="top5">
+          ${top.map(({c,ev},i)=>`<tr class="fila c-${ev.color}" data-id="${c.id}" tabindex="0">
+            <td>${i+1}</td><td class="nowrap"><strong>${esc(c.numero)}</strong></td><td class="cont">${esc(c.contratista)}</td>
+            <td class="nowrap">${esc(ev.etapa)}</td><td class="num nowrap">${ev.limiteTexto}</td><td class="r num">${ev.diasTexto}</td>
+            <td>${semaforo(ev.color)}</td><td class="r num nowrap">${pesos(c.valor)}</td></tr>`).join("")}
+        </tbody></table>
+      </div>
+    </section>
+  </div>`;
+}
+
+/* =========================================================
+   Oficio de requerimiento
+   ========================================================= */
+function textoOficio(c){
+  const ciudad = oficioCfg.ciudad.trim() || "[Ciudad]";
+  const plazo = oficioCfg.plazo.trim() || "[plazo que define el funcionario]";
+  const funcionario = oficioCfg.funcionario.trim() || "[Nombre y cargo del funcionario responsable]";
+  const pendientes = c.documentos.filter(d=>d.estado === "No");
+  return [
+    "BORRADOR – SIN FIRMA NI RADICADO",
+    "",
+    `${ciudad}, ${fmtFecha(hoy())}`,
+    "",
+    `Señores ${c.contratista}, NIT ${c.nit}`,
+    "",
+    `Referencia: Requerimiento de documentos para la liquidación del contrato ${c.numero}`,
+    "",
+    `En el marco del cierre del contrato ${c.numero}, cuyo objeto es ${c.objeto}, la oficina de contratación revisó el expediente y encontró pendientes los siguientes documentos:`,
+    "",
+    ...pendientes.map((d,i)=>`${i+1}. ${d.nombre}`),
+    "",
+    `Le solicitamos remitirlos dentro de los ${plazo} siguientes al recibo de este oficio.`,
+    "",
+    "Atentamente,",
+    "",
+    "",
+    funcionario
+  ].join("\n");
+}
+
+const dlg = document.getElementById("dlgOficio");
+function abrirOficio(c){
+  if(!evaluar(c).oficioHabilitado) return;
+  oficioActual = c;
+  document.getElementById("ofCiudad").value = oficioCfg.ciudad;
+  document.getElementById("ofPlazo").value = oficioCfg.plazo;
+  document.getElementById("ofFuncionario").value = oficioCfg.funcionario;
+  document.getElementById("dlgTitulo").textContent = "Oficio de requerimiento – " + c.numero;
+  document.getElementById("ofEstado").textContent = "";
+  document.getElementById("ofTexto").textContent = textoOficio(c);
+  if(typeof dlg.showModal === "function") dlg.showModal(); else dlg.setAttribute("open","");
+}
+["ofCiudad","ofPlazo","ofFuncionario"].forEach(id=>{
+  document.getElementById(id).addEventListener("input", e=>{
+    const k = {ofCiudad:"ciudad", ofPlazo:"plazo", ofFuncionario:"funcionario"}[id];
+    oficioCfg[k] = e.target.value; guardar();
+    if(oficioActual) document.getElementById("ofTexto").textContent = textoOficio(oficioActual);
+  });
+});
+async function copiarTexto(texto){
+  try{ await navigator.clipboard.writeText(texto); return true; }
+  catch(e){
+    const ta = document.createElement("textarea");
+    ta.value = texto; ta.style.position = "fixed"; ta.style.opacity = "0";
+    dlg.appendChild(ta); ta.select();
+    let ok = false; try{ ok = document.execCommand("copy"); }catch(_){}
+    ta.remove(); return ok;
+  }
+}
+function descargarTxt(c){
+  const blob = new Blob(["﻿" + textoOficio(c).replace(/\n/g,"\r\n")], {type:"text/plain;charset=utf-8"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "oficio_requerimiento_" + String(c.numero || "contrato").replace(/[^\w.-]+/g,"_") + ".txt";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+}
+
+/* =========================================================
+   Eventos
+   ========================================================= */
+document.addEventListener("click", async e=>{
+  const fila = e.target.closest("tr.fila");
+  const el = e.target.closest("[data-action]");
+  if(!el){ if(fila) location.hash = "#/ficha/" + fila.dataset.id; return; }
+  const a = el.dataset.action;
+  const id = (location.hash.match(/^#\/ficha\/(.+)$/) || [])[1];
+  const c = id ? datos.find(x=>x.id === id) : null;
+  if(a === "reset"){
+    if(confirm("¿Restaurar los 10 contratos de ejemplo? Se perderán los cambios guardados en este navegador.")){
+      datos = construirSemilla(); filtros = {color:"", tipo:"", estado:"", q:""}; guardar(); render();
+    }
+  } else if(a === "limpiar"){ filtros = {color:"", tipo:"", estado:"", q:""}; vistaInventario(); }
+  else if(a === "color"){ filtros.color = el.dataset.color; actualizarTabla(); }
+  else if(a === "ir-color"){ filtros.color = el.dataset.color; location.hash = "#/inventario"; }
+  else if(a === "validar" && c){ c.validado_por_humano = !c.validado_por_humano; guardar(); refrescarFicha(c); }
+  else if(a === "doc" && c){
+    const d = c.documentos.find(x=>x.codigo === el.dataset.codigo);
+    if(d){ d.estado = el.dataset.estado; guardar(); pintarChecklist(c); refrescarFicha(c); }
+  }
+  else if(a === "oficio" && c) abrirOficio(c);
+  else if(a === "cerrar-oficio") dlg.close();
+  else if(a === "copiar" && oficioActual){
+    const ok = await copiarTexto(textoOficio(oficioActual));
+    document.getElementById("ofEstado").textContent = ok ? "Texto copiado al portapapeles." : "No se pudo copiar; seleccione el texto manualmente.";
+  }
+  else if(a === "descargar" && oficioActual){ descargarTxt(oficioActual); document.getElementById("ofEstado").textContent = "Archivo .txt descargado."; }
+});
+document.addEventListener("keydown", e=>{
+  const fila = e.target.closest && e.target.closest("tr.fila");
+  if(fila && (e.key === "Enter" || e.key === " ")){ e.preventDefault(); location.hash = "#/ficha/" + fila.dataset.id; }
+});
+app.addEventListener("input", e=>{
+  const t = e.target;
+  if(t.id === "fQ"){ filtros.q = t.value; actualizarTabla(); return; }
+  if(t.id === "fTipo"){ filtros.tipo = t.value; actualizarTabla(); return; }
+  if(t.id === "fEstado"){ filtros.estado = t.value; actualizarTabla(); return; }
+  const campo = t.dataset.field; if(!campo) return;
+  const id = (location.hash.match(/^#\/ficha\/(.+)$/) || [])[1];
+  const c = datos.find(x=>x.id === id); if(!c) return;
+  if(campo === "valor") c.valor = t.value === "" ? null : Number(t.value);
+  else if(campo === "plazo_pactado_meses") c.plazo_pactado_meses = t.value === "" ? null : Math.max(0, Math.trunc(Number(t.value)));
+  else if(campo === "tipo"){ cambiarTipo(c, t.value); pintarChecklist(c); }
+  else c[campo] = t.value;
+  if(campo === "fecha_terminacion") document.getElementById("campoFecha").classList.toggle("error", !parseFecha(t.value));
+  guardar(); refrescarFicha(c);
+  if(campo === "tipo") pintarChecklist(c);
+});
+
+/* =========================================================
+   Navegación
+   ========================================================= */
+function render(){
+  const h = location.hash || "#/inventario";
+  const mFicha = h.match(/^#\/ficha\/(.+)$/);
+  const vista = mFicha ? "ficha" : (h === "#/tablero" ? "tablero" : "inventario");
+  document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("activo", a.dataset.nav === (vista === "tablero" ? "tablero" : "inventario")));
+  if(dlg.open) dlg.close();
+  if(vista !== "ficha") origenFicha = vista;
+  if(vista === "ficha") vistaFicha(mFicha[1]);
+  else if(vista === "tablero") vistaTablero();
+  else vistaInventario();
+  window.scrollTo(0,0);
+}
+window.addEventListener("hashchange", render);
+document.getElementById("fechaRef").textContent = fmtFecha(hoy());
+cargar();
+render();
+</script>
+</body>
+</html>
