@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="es-CO">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Semáforo de Liquidaciones Contractuales · Que ningún plazo se le vuelva a vencer</title>
+<meta name="description" content="Para oficinas de contratación de entidades públicas: vea en segundos qué contratos están por vencer su plazo de liquidación y qué documentos faltan, sin abrir cada expediente.">
+<meta name="theme-color" content="#1f4e8c">
+<!-- Etiquetas para compartir en redes. og:image y og:url quedan POR DEFINIR (requieren una URL pública). -->
+<meta property="og:type" content="website">
+<meta property="og:locale" content="es_CO">
+<meta property="og:site_name" content="Semáforo de Liquidaciones Contractuales">
+<meta property="og:title" content="Que ningún plazo de liquidación se le vuelva a vencer sin aviso">
+<meta property="og:description" content="Vea en segundos qué contratos están por vencer su plazo de liquidación y qué documentos faltan, sin abrir cada expediente.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Semáforo de Liquidaciones Contractuales">
+<meta name="twitter:description" content="Vea en segundos qué contratos están por vencer su plazo de liquidación y qué documentos faltan.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='9' y='1' width='14' height='30' rx='5' fill='%2317171b'/%3E%3Ccircle cx='16' cy='8' r='3.5' fill='%23d83a3a'/%3E%3Ccircle cx='16' cy='16' r='3.5' fill='%23e2b100'/%3E%3Ccircle cx='16' cy='24' r='3.5' fill='%231e9e5a'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<a class="saltar" href="#contenido">Saltar al contenido</a>
+
+<!-- 1. Banner dinámico 1: barra de anuncio -->
+<div class="anuncio" id="anuncio" role="region" aria-label="Anuncios" hidden>
+  <div class="anuncio-in">
+    <div class="anuncio-msgs" id="anuncioMsgs"></div>
+    <button type="button" class="anuncio-btn" id="anuncioSig" aria-label="Siguiente anuncio">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+    <button type="button" class="anuncio-btn" id="anuncioCerrar" aria-label="Cerrar anuncios">
+      <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+    </button>
+  </div>
+</div>
+
+<header class="barra">
+  <div class="contenedor barra-in">
+    <a class="marca" href="#inicio" aria-label="Semáforo de Liquidaciones Contractuales, inicio">
+      <span class="logo" aria-hidden="true"><i class="r"></i><i class="a"></i><i class="v"></i></span>
+      <span class="marca-txt">Semáforo de Liquidaciones</span>
+    </a>
+    <nav aria-label="Secciones">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#funciones">Funciones</a>
+      <a href="#precios">Precios</a>
+      <a href="#preguntas">Preguntas</a>
+    </nav>
+    <a class="btn btn-sm" href="#registro">Probar la herramienta</a>
+  </div>
+</header>
+
+<main id="contenido">
+
+  <!-- 2. Hero -->
+  <section class="hero" id="inicio" aria-labelledby="heroTitulo">
+    <div class="contenedor hero-in">
+      <div class="hero-txt">
+        <p class="eyebrow">Para oficinas de contratación de entidades públicas</p>
+        <h1 id="heroTitulo">Que ningún plazo de liquidación se le vuelva a vencer sin aviso</h1>
+        <p class="lead">Abra el inventario y vea en segundos qué contratos debe atender primero, cuántos días le quedan y qué documentos faltan, sin abrir cada expediente.</p>
+        <a class="btn btn-lg" href="#registro">Probar la herramienta</a>
+        <ul class="sellos" aria-label="Características del prototipo">
+          <li>Funciona en el navegador</li>
+          <li>Sin instalar nada</li>
+          <li>Datos de ejemplo ficticios</li>
+        </ul>
+      </div>
+      <figure class="captura" role="img" aria-label="Espacio reservado para una captura de la pantalla Inventario de la herramienta">
+        <span class="captura-tag">CAPTURA PENDIENTE</span>
+        <span class="captura-desc">Pantalla Inventario: tabla de contratos ordenada por urgencia, con el semáforo en la primera columna.</span>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 3. Problema -->
+  <section class="seccion" id="problema" aria-labelledby="problemaTitulo">
+    <div class="contenedor">
+      <p class="eyebrow">El problema</p>
+      <h2 id="problemaTitulo">Hoy, cada cierre es abrir un expediente y contar meses a mano</h2>
+      <div class="grid-3">
+        <article class="tarjeta">
+          <h3>La información está dispersa</h3>
+          <p>El contrato, las actas, los informes, las pólizas y las certificaciones están en lugares distintos. Para saber qué falta hay que revisarlos uno por uno.</p>
+        </article>
+        <article class="tarjeta">
+          <h3>Cada contrato cuesta horas</h3>
+          <p>Calcular los términos de liquidación y verificar la completitud documental puede tomar entre una y dos horas por contrato.</p>
+        </article>
+        <article class="tarjeta">
+          <h3>Los vencimientos se descubren tarde</h3>
+          <p>Cuando alguien nota que pasó el plazo, ya hay riesgo de pérdida de competencia, hallazgos de los órganos de control y saldos sin definir.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Cómo funciona -->
+  <section class="seccion alt" id="como-funciona" aria-labelledby="comoTitulo">
+    <div class="contenedor">
+      <p class="eyebrow">Cómo funciona</p>
+      <h2 id="comoTitulo">Tres pasos, del inventario al oficio</h2>
+      <ol class="pasos">
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">1</span>
+          <div>
+            <h3>Abra el inventario</h3>
+            <p>Sus contratos aparecen ordenados por urgencia: primero los de competencia perdida y los extemporáneos, luego los que vencen en 30 días o menos. Busque por número, contratista u objeto, o filtre por color, tipo y estado.</p>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">2</span>
+          <div>
+            <h3>Revise la ficha</h3>
+            <p>Vea las fechas límite de liquidación bilateral, unilateral y máxima, con la vigente resaltada. Marque cada documento como Sí, No o N/A y el porcentaje de completitud se actualiza al instante.</p>
+            <figure class="captura captura-sm" role="img" aria-label="Espacio reservado para una captura de la ficha del contrato">
+              <span class="captura-tag">CAPTURA PENDIENTE</span>
+              <span class="captura-desc">Ficha del contrato: tres fechas y lista de chequeo.</span>
+            </figure>
+          </div>
+        </li>
+        <li class="paso">
+          <span class="paso-n" aria-hidden="true">3</span>
+          <div>
+            <h3>Pida lo que falta</h3>
+            <p>Si hay documentos en No, genere el borrador del oficio de requerimiento con la lista exacta. Cópielo o descárguelo en .txt, revíselo y tramítelo usted por los canales de la entidad.</p>
+            <figure class="captura captura-sm" role="img" aria-label="Espacio reservado para una captura del oficio de requerimiento">
+              <span class="captura-tag">CAPTURA PENDIENTE</span>
+              <span class="captura-desc">Borrador del oficio con los botones Copiar y Descargar .txt.</span>
+            </figure>
+          </div>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 5. Funcionalidades -->
+  <section class="seccion" id="funciones" aria-labelledby="funcionesTitulo">
+    <div class="contenedor">
+      <p class="eyebrow">Funciones</p>
+      <h2 id="funcionesTitulo">Lo que gana desde el primer día</h2>
+
+      <div class="leyenda" aria-labelledby="leyendaTitulo">
+        <h3 id="leyendaTitulo">Un color le dice qué atender primero</h3>
+        <ul>
+          <li><span class="dot c-negro" aria-hidden="true"></span><strong>Negro</strong> Pasó la fecha máxima: posible pérdida de competencia</li>
+          <li><span class="dot c-rojo" aria-hidden="true"></span><strong>Rojo</strong> Extemporánea: dentro de los dos años finales</li>
+          <li><span class="dot c-naranja" aria-hidden="true"></span><strong>Naranja</strong> 0 a 30 días para la fecha límite</li>
+          <li><span class="dot c-amarillo" aria-hidden="true"></span><strong>Amarillo</strong> 31 a 60 días</li>
+          <li><span class="dot c-verde" aria-hidden="true"></span><strong>Verde</strong> Más de 60 días</li>
+          <li><span class="dot c-gris" aria-hidden="true"></span><strong>Gris</strong> No requiere, ya liquidado o en ejecución</li>
+        </ul>
+      </div>
+
+      <div class="grid-funciones">
+        <article class="funcion">
+          <h3>Sabe a qué contrato dedicarle la mañana</h3>
+          <p>El inventario se ordena solo: por color del semáforo, luego por menos días restantes y, si empatan, por mayor valor del contrato.</p>
+        </article>
+        <article class="funcion">
+          <h3>Deja de contar meses a mano</h3>
+          <p>Desde la fecha de terminación calcula la liquidación bilateral (plazo pactado o cuatro meses), la unilateral (dos meses más) y la fecha máxima (dos años más). Un contrato terminado el 2026-09-30 tiene hasta el 2027-01-30 para la bilateral.</p>
+        </article>
+        <article class="funcion">
+          <h3>Ve de un vistazo qué falta en el expediente</h3>
+          <p>La lista de chequeo cambia según el tipo de contrato: siete documentos base más los propios de obra, consultoría, interventoría o convenio. Una obra revisa nueve, incluido el amparo de estabilidad.</p>
+        </article>
+        <article class="funcion">
+          <h3>Pide los documentos en minutos</h3>
+          <p>El borrador del oficio trae el contratista, el NIT, el objeto y la lista numerada de faltantes. Usted pone la ciudad, el plazo para responder y la firma.</p>
+        </article>
+        <article class="funcion">
+          <h3>Rinde cuentas con números claros</h3>
+          <p>El tablero muestra cuántos contratos hay en cada color, el valor en riesgo (la suma de los contratos en naranja, rojo y negro) y los cinco más urgentes.</p>
+          <figure class="captura captura-sm" role="img" aria-label="Espacio reservado para una captura del tablero de control">
+            <span class="captura-tag">CAPTURA PENDIENTE</span>
+            <span class="captura-desc">Tablero: contadores por color, valor en riesgo y los cinco más urgentes.</span>
+          </figure>
+        </article>
+        <article class="funcion">
+          <h3>Encuentra cualquier contrato al instante</h3>
+          <p>Busque por número, contratista u objeto y filtre por color del semáforo, tipo de contrato y estado de liquidación.</p>
+        </article>
+        <article class="funcion">
+          <h3>Usted tiene la última palabra</h3>
+          <p>Corrija cualquier dato, escriba observaciones y marque la ficha como validada por humano. La herramienta nunca marca un contrato como liquidado por su cuenta.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Casos de uso: banner dinámico 2 -->
+  <section class="seccion alt" id="casos" aria-labelledby="casosTitulo">
+    <div class="contenedor">
+      <p class="eyebrow">Casos de uso</p>
+      <h2 id="casosTitulo">Así se ve en el trabajo de cada día</h2>
+      <div class="carrusel" id="carrusel" role="region" aria-roledescription="carrusel" aria-label="Casos de uso">
+        <div class="car-slides" id="carSlides"></div>
+        <div class="car-ctrl">
+          <button type="button" class="car-btn" id="carAnt" aria-label="Caso anterior">
+            <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="car-puntos" id="carPuntos" role="group" aria-label="Elegir caso"></div>
+          <button type="button" class="car-btn" id="carSig" aria-label="Caso siguiente">
+            <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="car-btn car-pausa" id="carPausa" aria-label="Pausar rotación" aria-pressed="false">
+            <svg class="ic-pausa" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5 3v10M11 3v10" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+            <svg class="ic-play" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M5 3l8 5-8 5z" fill="currentColor"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Precios (demo) -->
+  <section class="seccion" id="precios" aria-labelledby="preciosTitulo">
+    <div class="contenedor">
+      <p class="eyebrow">Precios</p>
+      <h2 id="preciosTitulo">Elija cómo quiere empezar</h2>
+      <p class="etiqueta-demo" id="preciosEtiqueta">Precios de referencia. Versión demo.</p>
+      <div class="planes" id="planes"></div>
+      <p class="nota">Sin pasarela de pagos ni cobros. Hoy todos los planes incluyen las mismas funciones de la herramienta.</p>
+    </div>
+  </section>
+
+  <!-- 8. Preguntas frecuentes -->
+  <section class="seccion alt" id="preguntas" aria-labelledby="preguntasTitulo">
+    <div class="contenedor angosto">
+      <p class="eyebrow">Preguntas frecuentes</p>
+      <h2 id="preguntasTitulo">Lo que suele preguntar una oficina de contratación</h2>
+      <div class="faq">
+        <details>
+          <summary>¿La herramienta decide si procede la liquidación?</summary>
+          <p>No. Sugiere la etapa y el semáforo con reglas simplificadas. No declara la pérdida de competencia ni sustituye la revisión jurídica: usted decide y marca la ficha como validada.</p>
+        </details>
+        <details>
+          <summary>¿Firma, envía o radica el oficio?</summary>
+          <p>No. Genera un borrador en texto, marcado "BORRADOR – SIN FIRMA NI RADICADO", para que usted lo copie o lo descargue y lo tramite por los canales de la entidad.</p>
+        </details>
+        <details>
+          <summary>¿Se conecta a SECOP, al correo o a las bases de la entidad?</summary>
+          <p>No. Hoy trabaja solo con los contratos cargados en la herramienta.</p>
+        </details>
+        <details>
+          <summary>¿Usa inteligencia artificial para calcular los plazos?</summary>
+          <p>No. Plazos, etapas, semáforo y prioridad salen de reglas explícitas que usted puede verificar.</p>
+        </details>
+        <details>
+          <summary>¿Cuenta días hábiles, festivos o suspensiones?</summary>
+          <p>No. Cuenta días calendario. Si el contrato tuvo suspensiones, ajuste la fecha de terminación en la ficha.</p>
+        </details>
+        <details>
+          <summary>¿Y si en el contrato se pactó otro plazo para liquidar?</summary>
+          <p>Escriba los meses pactados en la ficha. Si deja el campo vacío, se usan cuatro meses desde la terminación (art. 11 de la Ley 1150 de 2007).</p>
+        </details>
+        <details>
+          <summary>¿Qué pasa con los contratos de prestación de servicios profesionales y de apoyo a la gestión?</summary>
+          <p>Aparecen como "No requiere" y en gris, porque no requieren liquidación (art. 217 del Decreto-Ley 019 de 2012).</p>
+        </details>
+        <details>
+          <summary>¿Dónde quedan mis datos?</summary>
+          <p>En el navegador del equipo donde trabaja. No hay servidor ni base de datos externa: si borra los datos del navegador o cambia de equipo, no verá sus cambios.</p>
+        </details>
+        <details>
+          <summary>¿Las reglas ya están validadas por el área jurídica?</summary>
+          <p>No. Están simplificadas para el prototipo y deben revisarse (plazo fijado en pliegos, acto que ordena la terminación, caducidad de la acción contractual) antes de cualquier uso real.</p>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Formulario hacia la herramienta -->
+  <section class="seccion" id="registro" aria-labelledby="registroTitulo">
+    <div class="contenedor angosto">
+      <div class="form-caja">
+        <p class="eyebrow">Empiece hoy</p>
+        <h2 id="registroTitulo">Pruebe la herramienta con contratos de ejemplo</h2>
+        <p>Indique su nombre, su correo y el plan que le interesa, y abra el prototipo. Hoy no creamos cuentas: <strong>sus datos no se guardan ni se envían</strong>.</p>
+        <form id="formRegistro" novalidate>
+          <div class="campo">
+            <label for="fNombre">Nombre</label>
+            <input type="text" id="fNombre" name="nombre" autocomplete="name" required minlength="2" maxlength="80" aria-describedby="eNombre">
+            <p class="error" id="eNombre" aria-live="polite"></p>
+          </div>
+          <div class="campo">
+            <label for="fCorreo">Correo electrónico</label>
+            <input type="email" id="fCorreo" name="correo" autocomplete="email" required maxlength="120" aria-describedby="eCorreo">
+            <p class="error" id="eCorreo" aria-live="polite"></p>
+          </div>
+          <div class="campo">
+            <label for="fPlan">Plan de interés</label>
+            <select id="fPlan" name="plan" required aria-describedby="ePlan">
+              <option value="">Seleccione un plan</option>
+            </select>
+            <p class="error" id="ePlan" aria-live="polite"></p>
+          </div>
+          <button type="submit" class="btn btn-lg btn-bloque">Probar la herramienta</button>
+          <p class="nota" id="formEstado" role="status"></p>
+        </form>
+        <noscript><p class="nota">Para usar el formulario active JavaScript en su navegador.</p></noscript>
+      </div>
+    </div>
+  </section>
+</main>
+
+<!-- 10. Pie de página -->
+<footer class="pie">
+  <div class="contenedor pie-in">
+    <div>
+      <a class="marca" href="#inicio" aria-label="Volver al inicio">
+        <span class="logo" aria-hidden="true"><i class="r"></i><i class="a"></i><i class="v"></i></span>
+        <span class="marca-txt">Semáforo de Liquidaciones Contractuales</span>
+      </a>
+      <p class="aviso">Reglas simplificadas para el taller. Etapa y semáforo son sugerencias; no declaran la pérdida de competencia ni sustituyen la revisión jurídica.</p>
+      <p>Prototipo del Taller de Inteligencia Artificial para la Gestión Pública. Los contratos, nombres y valores de ejemplo son ficticios.</p>
+    </div>
+    <nav aria-label="Pie de página">
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#funciones">Funciones</a>
+      <a href="#precios">Precios</a>
+      <a href="#preguntas">Preguntas frecuentes</a>
+    </nav>
+    <div>
+      <p><strong>Contacto:</strong> POR DEFINIR</p>
+      <p><strong>Política de privacidad:</strong> POR DEFINIR</p>
+    </div>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="landing.js"></script>
+</body>
+</html>
